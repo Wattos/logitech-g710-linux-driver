@@ -58,6 +58,7 @@ echo -n "5" > /sys/bus/hid/devices/0003:046D:C24D.XXXX/logitech-g710/led_macro
 </pre>
 
 Writing the led_keys is a bit more involved. The file expects a single digit which is constructed in the following way:
+<pre>
 value= wasd << 4 | key
 
 where: 
@@ -65,3 +66,4 @@ where:
    key - Other key light intensity
 
 Only values from 0-4 accepted
+</pre>
