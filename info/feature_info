@@ -1,0 +1,7 @@
+Feature report: id=5 type=2 size=56 maxfield=1 report_count=7
+May  9 19:46:17 battipaglia kernel: [  568.808834]  Feature report: id=6 type=2 size=8 maxfield=1 report_count=1
+May  9 19:46:17 battipaglia kernel: [  568.808838]  Feature report: id=7 type=2 size=32 maxfield=1 report_count=4
+May  9 19:46:17 battipaglia kernel: [  568.808841]  Feature report: id=8 type=2 size=24 maxfield=1 report_count=3
+May  9 19:46:17 battipaglia kernel: [  568.808844]  Feature report: id=9 type=2 size=96 maxfield=1 report_count=12
+May  9 19:46:17 battipaglia kernel: [  568.808848]  Feature report: id=128 type=2 size=56 maxfield=1 report_count=7
+

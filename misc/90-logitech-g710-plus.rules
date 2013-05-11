@@ -1,0 +1,1 @@
+ACTION=="add", SUBSYSTEM=="hid", DRIVER=="hid-generic", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c24d",  RUN+="/bin/sh -c '/sbin/modprobe hid-lg-g710-plus; if test -d /sys/bus/hid/drivers/hid-generic && test -d /sys/bus/hid/drivers/hid-lg-g710-plus; then /bin/echo -n %k > /sys/bus/hid/drivers/hid-generic/unbind; /bin/echo -n %k > /sys/bus/hid/drivers/hid-lg-g710-plus/bind;fi'"
