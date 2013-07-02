@@ -164,7 +164,7 @@ static int lg_g710_plus_initialize(struct hid_device *hdev) {
             case 8: data->other_buttons_led_report= report; break;
             case 9:
                 data->g_mr_buttons_support_report= report; 
-                usbhid_submit_report(hdev, report, USB_DIR_OUT);
+                hid_hw_request(hdev, report, HID_REQ_SET_REPORT);
                 break;
         }
     }
@@ -247,7 +247,7 @@ static ssize_t lg_g710_plus_show_led_macro(struct device *device, struct device_
     if (data != NULL) {
         spin_lock(&data->lock);
         init_completion(&data->ready);
-        usbhid_submit_report(data->hdev, data->mr_buttons_led_report, USB_DIR_IN);
+        hid_hw_request(data->hdev, data->mr_buttons_led_report, HID_REQ_GET_REPORT);
         wait_for_completion_timeout(&data->ready, WAIT_TIME_OUT);
         spin_unlock(&data->lock);
         return sprintf(buf, "%d\n", data->led_macro);
@@ -261,7 +261,7 @@ static ssize_t lg_g710_plus_show_led_keys(struct device *device, struct device_a
     if (data != NULL) {
         spin_lock(&data->lock);
         init_completion(&data->ready);
-        usbhid_submit_report(data->hdev, data->other_buttons_led_report, USB_DIR_IN);
+        hid_hw_request(data->hdev, data->other_buttons_led_report, HID_REQ_GET_REPORT);
         wait_for_completion_timeout(&data->ready, WAIT_TIME_OUT);
         spin_unlock(&data->lock);
         return sprintf(buf, "%d\n", data->led_keys);
@@ -280,7 +280,7 @@ static ssize_t lg_g710_plus_store_led_macro(struct device *device, struct device
 
     spin_lock(&data->lock);
     data->mr_buttons_led_report->field[0]->value[0]= (key_mask & 0xF) << 4;
-    usbhid_submit_report(data->hdev, data->mr_buttons_led_report, USB_DIR_OUT);
+    hid_hw_request(data->hdev, data->mr_buttons_led_report, HID_REQ_SET_REPORT);
     spin_unlock(&data->lock);
     return count;
 }
@@ -304,7 +304,7 @@ static ssize_t lg_g710_plus_store_led_keys(struct device *device, struct device_
     spin_lock(&data->lock);
     data->other_buttons_led_report->field[0]->value[0]= wasd_mask;
     data->other_buttons_led_report->field[0]->value[1]= keys_mask;
-    usbhid_submit_report(data->hdev, data->other_buttons_led_report, USB_DIR_OUT);
+    hid_hw_request(data->hdev, data->other_buttons_led_report, HID_REQ_SET_REPORT);
     spin_unlock(&data->lock);
     return count;
 }
