@@ -19,6 +19,7 @@
 #include <linux/device.h>
 #include <linux/module.h>
 #include <linux/usb.h>
+#include <linux/version.h>
 
 #include "hid-ids.h"
 #include "usbhid/usbhid.h"
@@ -163,8 +164,12 @@ static int lg_g710_plus_initialize(struct hid_device *hdev) {
             case 6: data->mr_buttons_led_report= report; break;
             case 8: data->other_buttons_led_report= report; break;
             case 9:
-                data->g_mr_buttons_support_report= report; 
+                data->g_mr_buttons_support_report= report;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0)
                 hid_hw_request(hdev, report, HID_REQ_SET_REPORT);
+#else
+                usbhid_submit_report(hdev, report, USB_DIR_OUT);
+#endif
                 break;
         }
     }
@@ -247,7 +252,11 @@ static ssize_t lg_g710_plus_show_led_macro(struct device *device, struct device_
     if (data != NULL) {
         spin_lock(&data->lock);
         init_completion(&data->ready);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0)
         hid_hw_request(data->hdev, data->mr_buttons_led_report, HID_REQ_GET_REPORT);
+#else
+        usbhid_submit_report(data->hdev, data->mr_buttons_led_report, USB_DIR_IN);
+#endif
         wait_for_completion_timeout(&data->ready, WAIT_TIME_OUT);
         spin_unlock(&data->lock);
         return sprintf(buf, "%d\n", data->led_macro);
@@ -261,7 +270,11 @@ static ssize_t lg_g710_plus_show_led_keys(struct device *device, struct device_a
     if (data != NULL) {
         spin_lock(&data->lock);
         init_completion(&data->ready);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0)
         hid_hw_request(data->hdev, data->other_buttons_led_report, HID_REQ_GET_REPORT);
+#else
+        usbhid_submit_report(data->hdev, data->other_buttons_led_report, USB_DIR_IN);
+#endif
         wait_for_completion_timeout(&data->ready, WAIT_TIME_OUT);
         spin_unlock(&data->lock);
         return sprintf(buf, "%d\n", data->led_keys);
@@ -280,7 +293,11 @@ static ssize_t lg_g710_plus_store_led_macro(struct device *device, struct device
 
     spin_lock(&data->lock);
     data->mr_buttons_led_report->field[0]->value[0]= (key_mask & 0xF) << 4;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0)
     hid_hw_request(data->hdev, data->mr_buttons_led_report, HID_REQ_SET_REPORT);
+#else
+    usbhid_submit_report(data->hdev, data->mr_buttons_led_report, USB_DIR_OUT);
+#endif
     spin_unlock(&data->lock);
     return count;
 }
@@ -304,7 +321,11 @@ static ssize_t lg_g710_plus_store_led_keys(struct device *device, struct device_
     spin_lock(&data->lock);
     data->other_buttons_led_report->field[0]->value[0]= wasd_mask;
     data->other_buttons_led_report->field[0]->value[1]= keys_mask;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0)
     hid_hw_request(data->hdev, data->other_buttons_led_report, HID_REQ_SET_REPORT);
+#else
+    usbhid_submit_report(data->hdev, data->other_buttons_led_report, USB_DIR_OUT);
+#endif
     spin_unlock(&data->lock);
     return count;
 }
