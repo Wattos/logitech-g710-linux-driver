@@ -19,6 +19,7 @@
 #include <linux/device.h>
 #include <linux/module.h>
 #include <linux/usb.h>
+#include <linux/version.h>
 
 #include "hid-ids.h"
 #include "usbhid/usbhid.h"
@@ -147,6 +148,19 @@ static int lg_g710_plus_input_mapping(struct hid_device *hdev, struct hid_input 
     return 0;
 }
 
+enum req_type {
+    REQTYPE_READ,
+    REQTYPE_WRITE
+};
+
+static void hidhw_request(struct hid_device *hdev, struct hid_report *report, enum req_type reqtype) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0)
+    hid_hw_request(hdev, report, reqtype == REQTYPE_READ ? HID_REQ_GET_REPORT : HID_REQ_SET_REPORT);
+#else
+    usbhid_submit_report(hdev, report, reqtype == REQTYPE_READ ? USB_DIR_IN : USB_DIR_OUT);
+#endif
+}
+
 static int lg_g710_plus_initialize(struct hid_device *hdev) {
     int ret = 0;
     struct lg_g710_plus_data *data;
@@ -163,8 +177,8 @@ static int lg_g710_plus_initialize(struct hid_device *hdev) {
             case 6: data->mr_buttons_led_report= report; break;
             case 8: data->other_buttons_led_report= report; break;
             case 9:
-                data->g_mr_buttons_support_report= report; 
-                usbhid_submit_report(hdev, report, USB_DIR_OUT);
+                data->g_mr_buttons_support_report= report;
+                hidhw_request(hdev, report, REQTYPE_WRITE);
                 break;
         }
     }
@@ -247,7 +261,7 @@ static ssize_t lg_g710_plus_show_led_macro(struct device *device, struct device_
     if (data != NULL) {
         spin_lock(&data->lock);
         init_completion(&data->ready);
-        usbhid_submit_report(data->hdev, data->mr_buttons_led_report, USB_DIR_IN);
+        hidhw_request(data->hdev, data->mr_buttons_led_report, REQTYPE_READ);
         wait_for_completion_timeout(&data->ready, WAIT_TIME_OUT);
         spin_unlock(&data->lock);
         return sprintf(buf, "%d\n", data->led_macro);
@@ -261,7 +275,7 @@ static ssize_t lg_g710_plus_show_led_keys(struct device *device, struct device_a
     if (data != NULL) {
         spin_lock(&data->lock);
         init_completion(&data->ready);
-        usbhid_submit_report(data->hdev, data->other_buttons_led_report, USB_DIR_IN);
+        hidhw_request(data->hdev, data->other_buttons_led_report, REQTYPE_READ);
         wait_for_completion_timeout(&data->ready, WAIT_TIME_OUT);
         spin_unlock(&data->lock);
         return sprintf(buf, "%d\n", data->led_keys);
@@ -280,7 +294,7 @@ static ssize_t lg_g710_plus_store_led_macro(struct device *device, struct device
 
     spin_lock(&data->lock);
     data->mr_buttons_led_report->field[0]->value[0]= (key_mask & 0xF) << 4;
-    usbhid_submit_report(data->hdev, data->mr_buttons_led_report, USB_DIR_OUT);
+    hidhw_request(data->hdev, data->mr_buttons_led_report, REQTYPE_WRITE);
     spin_unlock(&data->lock);
     return count;
 }
@@ -304,7 +318,7 @@ static ssize_t lg_g710_plus_store_led_keys(struct device *device, struct device_
     spin_lock(&data->lock);
     data->other_buttons_led_report->field[0]->value[0]= wasd_mask;
     data->other_buttons_led_report->field[0]->value[1]= keys_mask;
-    usbhid_submit_report(data->hdev, data->other_buttons_led_report, USB_DIR_OUT);
+    hidhw_request(data->hdev, data->other_buttons_led_report, REQTYPE_WRITE);
     spin_unlock(&data->lock);
     return count;
 }
