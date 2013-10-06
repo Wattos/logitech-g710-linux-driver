@@ -249,6 +249,11 @@ err_free:
 static void lg_g710_plus_remove(struct hid_device *hdev)
 {
     struct lg_g710_plus_data* data = lg_g710_plus_get_data(hdev);
+    struct list_head *feature_report_list = &hdev->report_enum[HID_FEATURE_REPORT].report_list;
+
+    if (data != NULL && !list_empty(feature_report_list))
+        sysfs_remove_group(&hdev->dev.kobj, &data->attr_group);
+
     hid_hw_stop(hdev);
     if (data != NULL) {
         kfree(data);
