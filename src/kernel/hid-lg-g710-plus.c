@@ -128,8 +128,9 @@ static int lg_g710_plus_raw_event(struct hid_device *hdev, struct hid_report *re
     struct lg_g710_plus_data* g710_data = lg_g710_plus_get_data(hdev);
     /* Ignore the first event. It will send a key down event for certain buttons, but never the key up event*/
     if (g710_data->first_event) {
+        memset(data, 0, size);
         g710_data->first_event= 0;
-        return 1;
+        return 0;
     }
     switch(report->id) {
         case 3: return lg_g710_plus_extra_key_event(hdev, report, data, size);
@@ -249,6 +250,11 @@ err_free:
 static void lg_g710_plus_remove(struct hid_device *hdev)
 {
     struct lg_g710_plus_data* data = lg_g710_plus_get_data(hdev);
+    struct list_head *feature_report_list = &hdev->report_enum[HID_FEATURE_REPORT].report_list;
+
+    if (data != NULL && !list_empty(feature_report_list))
+        sysfs_remove_group(&hdev->dev.kobj, &data->attr_group);
+
     hid_hw_stop(hdev);
     if (data != NULL) {
         kfree(data);
