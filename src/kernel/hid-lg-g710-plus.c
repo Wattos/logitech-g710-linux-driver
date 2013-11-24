@@ -62,8 +62,6 @@ struct lg_g710_plus_data {
     struct hid_report *other_buttons_led_report; /* Controls the backlight of other buttons */
     struct hid_report *gamemode_report; /* Controls the backlight of other buttons */
 
-    u8 first_event;
-
     u16 macro_button_state; /* Holds the last state of the G1-G6, M1-MR buttons. Required to know which buttons were pressed and which were released */
     struct hid_device *hdev; 
     struct input_dev *input_dev;
@@ -125,13 +123,6 @@ static int lg_g710_plus_extra_led_keys_event(struct hid_device *hdev, struct hid
 
 static int lg_g710_plus_raw_event(struct hid_device *hdev, struct hid_report *report, u8 *data, int size)
 {
-    struct lg_g710_plus_data* g710_data = lg_g710_plus_get_data(hdev);
-    /* Ignore the first event. It will send a key down event for certain buttons, but never the key up event*/
-    if (g710_data->first_event) {
-        memset(data, 0, size);
-        g710_data->first_event= 0;
-        return 0;
-    }
     switch(report->id) {
         case 3: return lg_g710_plus_extra_key_event(hdev, report, data, size);
         case 6: return lg_g710_plus_extra_led_mr_event(hdev, report, data, size);
@@ -198,7 +189,6 @@ static struct lg_g710_plus_data* lg_g710_plus_create(struct hid_device *hdev)
 
     data->attr_group.name= "logitech-g710";
     data->attr_group.attrs= lg_g710_plus_attrs;
-    data->first_event= 1;
     data->hdev= hdev;
 
     spin_lock_init(&data->lock);
@@ -218,6 +208,12 @@ static int lg_g710_plus_probe(struct hid_device *hdev, const struct hid_device_i
         goto err_free;
     }
     hid_set_drvdata(hdev, data);
+
+    /*
+     * Without this, the device would send a first report with a key down event for
+     * certain buttons, but never the key up event
+     */
+    hdev->quirks |= HID_QUIRK_NOGET;
 
     ret = hid_parse(hdev);
     if (ret) {
