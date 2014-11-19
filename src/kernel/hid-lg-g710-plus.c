@@ -79,8 +79,10 @@ static ssize_t lg_g710_plus_store_led_macro(struct device *device, struct device
 static ssize_t lg_g710_plus_show_led_keys(struct device *device, struct device_attribute *attr, char *buf);
 static ssize_t lg_g710_plus_store_led_keys(struct device *device, struct device_attribute *attr, const char *buf, size_t count);
 
-static DEVICE_ATTR(led_macro, S_IRUGO | S_IWUGO, lg_g710_plus_show_led_macro, lg_g710_plus_store_led_macro);
-static DEVICE_ATTR(led_keys,  S_IRUGO | S_IWUGO, lg_g710_plus_show_led_keys,  lg_g710_plus_store_led_keys);
+//static DEVICE_ATTR(led_macro, S_IRUGO | S_IWUGO, lg_g710_plus_show_led_macro, lg_g710_plus_store_led_macro);
+//static DEVICE_ATTR(led_keys,  S_IRUGO | S_IWUGO, lg_g710_plus_show_led_keys,  lg_g710_plus_store_led_keys);
+static DEVICE_ATTR(led_macro, 0660, lg_g710_plus_show_led_macro, lg_g710_plus_store_led_macro);
+static DEVICE_ATTR(led_keys,  0660, lg_g710_plus_show_led_keys,  lg_g710_plus_store_led_keys);
 
 static struct attribute *lg_g710_plus_attrs[] = {
         &dev_attr_led_macro.attr,
