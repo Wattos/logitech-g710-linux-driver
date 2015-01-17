@@ -290,7 +290,7 @@ static ssize_t lg_g710_plus_store_led_macro(struct device *device, struct device
     unsigned long key_mask;
     int retval;
     struct lg_g710_plus_data* data = hid_get_drvdata(dev_get_drvdata(device->parent));
-    retval = strict_strtoul(buf, 10, &key_mask);
+    retval = kstrtoul(buf, 10, &key_mask);
     if (retval)
         return retval;
 
@@ -307,7 +307,7 @@ static ssize_t lg_g710_plus_store_led_keys(struct device *device, struct device_
     unsigned long key_mask;
     u8 wasd_mask, keys_mask;
     struct lg_g710_plus_data* data = hid_get_drvdata(dev_get_drvdata(device->parent));
-    retval = strict_strtoul(buf, 10, &key_mask);
+    retval = kstrtoul(buf, 10, &key_mask);
     if (retval)
         return retval;
 
