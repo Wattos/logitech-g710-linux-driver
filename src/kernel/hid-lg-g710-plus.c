@@ -36,16 +36,16 @@ static const u8 g710_plus_key_map[LOGITECH_KEY_MAP_SIZE] = {
     0, /* unused */
     0, /* unused */
     0, /* unused */
-    KEY_F13, /* M1 */
-    KEY_F14, /* M2 */
-    KEY_F15, /* M3 */
-    KEY_F16, /* MR */
-    KEY_F17, /* G1 */
-    KEY_F18, /* G2 */
-    KEY_F19, /* G3 */
-    KEY_F20, /* G4 */
-    KEY_F21, /* G5 */
-    KEY_F22, /* G6 */
+    KEY_PROG1, /* M1 */
+    KEY_PROG2, /* M2 */
+    KEY_PROG3, /* M3 */
+    KEY_PROG4, /* MR */
+    KEY_F14, /* G1 */
+    KEY_F15, /* G2 */
+    KEY_F16, /* G3 */
+    KEY_F17, /* G4 */
+    KEY_F18, /* G5 */
+    KEY_SCALE, /* G6 */
     0, /* unused */
     0, /* unused */
 };
@@ -131,13 +131,21 @@ static int lg_g710_plus_raw_event(struct hid_device *hdev, struct hid_report *re
     }
 }
 
-static int lg_g710_plus_input_mapping(struct hid_device *hdev, struct hid_input *hi, struct hid_field *field, struct hid_usage *usage, unsigned long **bit, int *max) 
-{
+static void lg_g710_plus_input_configured(struct hid_device *hdev,
+                                        struct hid_input *hi) {
     struct lg_g710_plus_data* data = lg_g710_plus_get_data(hdev);
+    u8 i;
+    
     if (data != NULL && data->input_dev == NULL) {
         data->input_dev= hi->input;
     }
-    return 0;
+    
+    set_bit(EV_KEY, data->input_dev->evbit);
+    for (i = 0; i < LOGITECH_KEY_MAP_SIZE; i++) {
+        if (g710_plus_key_map[i] != 0) {
+            set_bit(g710_plus_key_map[i], data->input_dev->keybit);
+        }
+    }
 }
 
 enum req_type {
@@ -335,7 +343,7 @@ static struct hid_driver lg_g710_plus_driver = {
     .name = "hid-lg-g710-plus",
     .id_table = lg_g710_plus_devices,
     .raw_event = lg_g710_plus_raw_event,
-    .input_mapping = lg_g710_plus_input_mapping,
+    .input_configured = lg_g710_plus_input_configured,
     .probe= lg_g710_plus_probe,
     .remove= lg_g710_plus_remove,
 };
