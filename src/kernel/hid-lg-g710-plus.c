@@ -135,17 +135,34 @@ static void lg_g710_plus_input_configured(struct hid_device *hdev,
                                         struct hid_input *hi) {
     struct lg_g710_plus_data* data = lg_g710_plus_get_data(hdev);
     u8 i;
-    
+    struct list_head *feature_report_list = &hdev->report_enum[HID_FEATURE_REPORT].report_list;
+
+    if (list_empty(feature_report_list)) {
+        //bail on the keyboard device, we only want the aux key device.
+        return; 
+    }
+
     if (data != NULL && data->input_dev == NULL) {
         data->input_dev= hi->input;
     }
     
     set_bit(EV_KEY, data->input_dev->evbit);
+    memset(data->input_dev->keybit, 0, sizeof(data->input_dev->keybit));
+    //add the synthetic keys
     for (i = 0; i < LOGITECH_KEY_MAP_SIZE; i++) {
         if (g710_plus_key_map[i] != 0) {
             set_bit(g710_plus_key_map[i], data->input_dev->keybit);
         }
     }
+    //also, add the media keys back
+    set_bit(KEY_PLAYPAUSE);
+    set_bit(KEY_STOPCD);
+    set_bit(KEY_PREVIOUSSONG);
+    set_bit(KEY_NEXTSONG);
+    set_bit(KEY_VOLUMEUP);
+    set_bit(KEY_VOLUMEDOWN);
+    set_bit(KEY_MUTE);
+    
 }
 
 enum req_type {
