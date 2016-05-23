@@ -63,7 +63,7 @@ struct lg_g710_plus_data {
     struct hid_report *gamemode_report; /* Controls the backlight of other buttons */
 
     u16 macro_button_state; /* Holds the last state of the G1-G6, M1-MR buttons. Required to know which buttons were pressed and which were released */
-    struct hid_device *hdev; 
+    struct hid_device *hdev;
     struct input_dev *input_dev;
     struct attribute_group attr_group;
 
@@ -131,7 +131,7 @@ static int lg_g710_plus_raw_event(struct hid_device *hdev, struct hid_report *re
     }
 }
 
-static void lg_g710_plus_input_configured(struct hid_device *hdev,
+static int lg_g710_plus_input_configured(struct hid_device *hdev,
                                         struct hid_input *hi) {
     struct lg_g710_plus_data* data = lg_g710_plus_get_data(hdev);
     u8 i;
@@ -139,13 +139,13 @@ static void lg_g710_plus_input_configured(struct hid_device *hdev,
 
     if (list_empty(feature_report_list)) {
         //bail on the keyboard device, we only want the aux key device.
-        return; 
+        return 0;
     }
 
     if (data != NULL && data->input_dev == NULL) {
         data->input_dev= hi->input;
     }
-    
+
     set_bit(EV_KEY, data->input_dev->evbit);
     memset(data->input_dev->keybit, 0, sizeof(data->input_dev->keybit));
     //add the synthetic keys
@@ -155,14 +155,15 @@ static void lg_g710_plus_input_configured(struct hid_device *hdev,
         }
     }
     //also, add the media keys back
-    set_bit(KEY_PLAYPAUSE);
-    set_bit(KEY_STOPCD);
-    set_bit(KEY_PREVIOUSSONG);
-    set_bit(KEY_NEXTSONG);
-    set_bit(KEY_VOLUMEUP);
-    set_bit(KEY_VOLUMEDOWN);
-    set_bit(KEY_MUTE);
-    
+    set_bit(KEY_PLAYPAUSE, data->input_dev->keybit);
+    set_bit(KEY_STOPCD, data->input_dev->keybit);
+    set_bit(KEY_PREVIOUSSONG, data->input_dev->keybit);
+    set_bit(KEY_NEXTSONG, data->input_dev->keybit);
+    set_bit(KEY_VOLUMEUP, data->input_dev->keybit);
+    set_bit(KEY_VOLUMEDOWN, data->input_dev->keybit);
+    set_bit(KEY_MUTE, data->input_dev->keybit);
+
+    return 0;
 }
 
 enum req_type {
