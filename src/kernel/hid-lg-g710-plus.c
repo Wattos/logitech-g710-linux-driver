@@ -131,15 +131,22 @@ static int lg_g710_plus_raw_event(struct hid_device *hdev, struct hid_report *re
     }
 }
 
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4,3,0)
+#define CONFIGURED_SUCCESS 0
 static int lg_g710_plus_input_configured(struct hid_device *hdev,
                                         struct hid_input *hi) {
+#else
+#define CONFIGURED_SUCCESS
+static void lg_g710_plus_input_configured(struct hid_device *hdev,
+                                        struct hid_input *hi) {
+#endif
     struct lg_g710_plus_data* data = lg_g710_plus_get_data(hdev);
     u8 i;
     struct list_head *feature_report_list = &hdev->report_enum[HID_FEATURE_REPORT].report_list;
 
     if (list_empty(feature_report_list)) {
         //bail on the keyboard device, we only want the aux key device.
-        return 0;
+        return CONFIGURED_SUCCESS;
     }
 
     if (data != NULL && data->input_dev == NULL) {
@@ -163,7 +170,7 @@ static int lg_g710_plus_input_configured(struct hid_device *hdev,
     set_bit(KEY_VOLUMEDOWN, data->input_dev->keybit);
     set_bit(KEY_MUTE, data->input_dev->keybit);
 
-    return 0;
+    return CONFIGURED_SUCCESS;
 }
 
 enum req_type {
