@@ -72,6 +72,13 @@ struct lg_g710_plus_data {
 
     spinlock_t lock; /* lock for communication with user space */
     struct completion ready; /* ready indicator */
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,6,0)
+    struct led_classdev m1;
+    struct led_classdev m2;
+    struct led_classdev m3;
+    struct led_classdev mr;
+#endif
 };
 
 static ssize_t lg_g710_plus_show_led_macro(struct device *device, struct device_attribute *attr, char *buf);
@@ -186,6 +193,12 @@ static void hidhw_request(struct hid_device *hdev, struct hid_report *report, en
 #endif
 }
 
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,6,0)
+static int brightness_set_sync(struct led_classdev *led_cdev,
+                            enum led_brightness brightness);
+#endif
+
 static int lg_g710_plus_initialize(struct hid_device *hdev) {
     int ret = 0;
     struct lg_g710_plus_data *data;
@@ -209,6 +222,28 @@ static int lg_g710_plus_initialize(struct hid_device *hdev) {
     }
 
     ret= sysfs_create_group(&hdev->dev.kobj, &data->attr_group);
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,6,0)
+#define SETUP_LED(x, color) {                                 \
+        int name_sz = strlen(dev_name(&hdev->dev))            \
+            + strlen(#color) + strlen(#x) + 3;                \
+        char *name = devm_kzalloc(&hdev->dev,                 \
+                                name_sz, GFP_KERNEL);         \
+        snprintf(name, name_sz, "%s:%s:%s",                   \
+                dev_name(&hdev->dev), #color, #x);            \
+        data->x.name = name;                                  \
+        data->x.brightness_set_blocking = brightness_set_sync;    \
+        data->x.brightness = 0;                               \
+        data->x.max_brightness = 1;                           \
+        led_classdev_register(&hdev->dev, &data->x);          \
+    }
+    
+    SETUP_LED(m1, yellow);
+    SETUP_LED(m2, yellow);
+    SETUP_LED(m3, yellow);
+    SETUP_LED(mr, red);
+#endif
+    
     return ret;
 }
 
@@ -266,7 +301,7 @@ static int lg_g710_plus_probe(struct hid_device *hdev, const struct hid_device_i
         hid_hw_stop(hdev);
         goto err_free;
     }
-
+    
     return 0;
 
 err_free:
@@ -281,9 +316,24 @@ static void lg_g710_plus_remove(struct hid_device *hdev)
     struct lg_g710_plus_data* data = lg_g710_plus_get_data(hdev);
     struct list_head *feature_report_list = &hdev->report_enum[HID_FEATURE_REPORT].report_list;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,6,0)
+    if (data != NULL) {
+        struct list_head *feature_report_list = &hdev->report_enum[HID_FEATURE_REPORT].report_list;
+        
+        if (!list_empty(feature_report_list)) {
+            //only unregister these for the aux key device.
+            led_classdev_unregister(&data->m1);
+            led_classdev_unregister(&data->m2);
+            led_classdev_unregister(&data->m3);
+            led_classdev_unregister(&data->mr);
+        }
+    }
+#endif
+
     if (data != NULL && !list_empty(feature_report_list))
         sysfs_remove_group(&hdev->dev.kobj, &data->attr_group);
 
+    
     hid_hw_stop(hdev);
     if (data != NULL) {
         kfree(data);
@@ -357,6 +407,52 @@ static ssize_t lg_g710_plus_store_led_keys(struct device *device, struct device_
     spin_unlock(&data->lock);
     return count;
 }
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,6,0)
+static int brightness_set_sync(struct led_classdev *led_cdev,
+                        enum led_brightness brightness) {
+	struct device *dev = led_cdev->dev->parent;
+	struct hid_device *hdev = container_of(dev, struct hid_device, dev);
+    struct lg_g710_plus_data* data = hid_get_drvdata(hdev);
+
+    spin_lock(&data->lock);
+    {
+        s32 *mask = NULL;
+        u8 shift = 0;
+        if (led_cdev == &data->m1) {
+            mask = &data->mr_buttons_led_report->field[0]->value[0];
+            shift = 4;
+        }
+        else if (led_cdev == &data->m2) {
+            mask = &data->mr_buttons_led_report->field[0]->value[0];
+            shift = 5;
+        }
+        else if (led_cdev == &data->m3) {
+            mask = &data->mr_buttons_led_report->field[0]->value[0];
+            shift = 6;
+        }
+        else if (led_cdev == &data->mr) {
+            mask = &data->mr_buttons_led_report->field[0]->value[0];
+            shift = 7;
+        }
+        
+        if (mask != NULL) {
+            if (brightness == LED_OFF) {
+                *mask = (*mask) & ~(1 << shift);
+            }
+            else {
+                *mask = (*mask) |  (1 << shift);
+            }
+        }
+        
+    }
+    
+    hidhw_request(data->hdev, data->mr_buttons_led_report, REQTYPE_WRITE);
+    spin_unlock(&data->lock);
+
+    return 0;
+}
+#endif
 
 static const struct hid_device_id lg_g710_plus_devices[] = {
     { HID_USB_DEVICE(USB_VENDOR_ID_LOGITECH, USB_DEVICE_ID_LOGITECH_KEYBOARD_G710_PLUS) },
