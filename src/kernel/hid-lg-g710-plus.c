@@ -207,7 +207,6 @@ static void brightness_set(struct led_classdev *led_cdev,
                         enum led_brightness brightness) {
     struct g710_led_s *led = container_of(led_cdev, struct g710_led_s, cd);
     led_cdev->brightness = brightness;
-    dev_err(led_cdev->dev, "schedule_work\n");
     schedule_work(&led->work);
 }
 #endif
@@ -432,8 +431,6 @@ static int brightness_set_sync(struct led_classdev *led_cdev,
 	struct hid_device *hdev = container_of(dev, struct hid_device, dev);
     struct lg_g710_plus_data* data = hid_get_drvdata(hdev);
 
-    dev_err(led_cdev->dev, "brightness set\n");
-    
     spin_lock(&data->lock);
     {
         s32 *mask = NULL;
