@@ -80,7 +80,6 @@ struct lg_g710_plus_data {
     struct attribute_group attr_group;
 
     spinlock_t lock; /* lock for communication with user space */
-    struct completion ready; /* ready indicator */
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4,6,0)
     struct g710_led_s {
@@ -90,6 +89,7 @@ struct lg_g710_plus_data {
     } *leds[G710_LED_MAX];
 #endif
 };
+
 
 static ssize_t lg_g710_plus_show_led_mr_m1(struct device *device, struct device_attribute *attr, char *buf);
 static ssize_t lg_g710_plus_store_led_mr_m1(struct device *device, struct device_attribute *attr, const char *buf, size_t count);
@@ -384,6 +384,7 @@ static int lg_g710_plus_initialize(struct hid_device *hdev) {
     struct lg_g710_plus_data *data;
     struct list_head *feature_report_list = &hdev->report_enum[HID_FEATURE_REPORT].report_list;
     struct hid_report *report;
+
     if (list_empty(feature_report_list)) {
         return 0; /* Currently, the keyboard registers as two different devices */
     }
@@ -391,7 +392,7 @@ static int lg_g710_plus_initialize(struct hid_device *hdev) {
     data = lg_g710_plus_get_data(hdev);
     list_for_each_entry(report, feature_report_list, list) {
 
-        switch(report->id) {
+    switch(report->id) {
 //            case ?: data->gamemode_report= report; break;
             case 6: 
 				data->mr_buttons_led_report = report;
@@ -435,8 +436,7 @@ static struct lg_g710_plus_data* lg_g710_plus_create(struct hid_device *hdev)
     data->hdev= hdev;
 
     spin_lock_init(&data->lock);
-    init_completion(&data->ready);    
-
+ 
     return data;
 }
 
@@ -605,6 +605,25 @@ static ssize_t lg_g710_plus_store_led_keys(struct device *device, struct device_
 }
 
 //---------------------------------------------------------------------
+// To remember
+//---------------------------------------------------------------------
+
+//    struct completion ready; /* ready indicator */
+//
+//    init_completion(&data->ready);    
+//
+//   g710_data->led_macro= (data[1] >> 4) & 0xF;
+//   complete_all(&g710_data->ready);
+//
+//  !!! next will not work as wait_for_completion_timeout is inside spin_lock !!!
+//	spin_lock(&data->lock);
+//	init_completion(&data->ready);
+//	hidhw_request(data->hdev, data->mr_buttons_led_report, REQTYPE_READ);
+//	wait_for_completion_timeout(&data->ready, WAIT_TIME_OUT);
+//	spin_unlock(&data->lock);
+//	return sprintf(buf, "%d\n", data->led_macro);
+
+//---------------------------------------------------------------------
 //
 //---------------------------------------------------------------------
 
@@ -639,3 +658,4 @@ module_exit(lg_g710_plus_exit);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Filip Wieladek <Wattos@gmail.com>");
 MODULE_DESCRIPTION("Logitech G710+ driver");
+
