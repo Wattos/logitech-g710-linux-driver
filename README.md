@@ -82,3 +82,4 @@ The driver also used led device if kernel version is above 4.3.0. Above attibute
 /sys/bus/hid/devices/0003:046D:C24D.XXXX/leds/input*:while:wasd/brightness
 </pre>
 
+Note led devices can be found also from "/sys/class/leds/"
