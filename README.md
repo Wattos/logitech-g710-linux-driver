@@ -42,28 +42,43 @@ Use the key shortcut utilities provided by your DE to make use of the additional
 
 API
 --------------------------
-The driver also exposes a way to set the keyboard backlight intensity. That is done by writing either:
+The driver also exposes a way to set the keyboard backlight bightness. That is done by writing either:
 
 <pre>
-/sys/bus/hid/devices/0003:046D:C24D.XXXX/logitech-g710/led_macro
+/sys/bus/hid/devices/0003:046D:C24D.XXXX/logitech-g710/led_m1
+/sys/bus/hid/devices/0003:046D:C24D.XXXX/logitech-g710/led_m2
+/sys/bus/hid/devices/0003:046D:C24D.XXXX/logitech-g710/led_m3
+/sys/bus/hid/devices/0003:046D:C24D.XXXX/logitech-g710/led_mr
 /sys/bus/hid/devices/0003:046D:C24D.XXXX/logitech-g710/led_keys
+/sys/bus/hid/devices/0003:046D:C24D.XXXX/logitech-g710/led_wasd
 </pre>
 
 where XXXX is varies (e.g. 0008)
 
-The led_macro file expects a single number which is a bitmask of the first 4 bits. Each bit corresponds to a button. E.g. if you want to light up M1 and M3, you must write the bit pattern 0101, which corresponds to 5 in decimal:
+The led_* file expects a single number which is a brightness value 0-4 (if other value is given it defaults to 0):
 
 <pre>
-echo -n "5" > /sys/bus/hid/devices/0003:046D:C24D.XXXX/logitech-g710/led_macro
+echo -n "0" > /sys/bus/hid/devices/0003:046D:C24D.XXXX/logitech-g710/led_m*  off
+echo -n "1" > /sys/bus/hid/devices/0003:046D:C24D.XXXX/logitech-g710/led_m*  on
 </pre>
 
-Writing the led_keys is a bit more involved. The file expects a single digit which is constructed in the following way:
 <pre>
-value= wasd &lt;&lt; 4 | key
-
-where: 
-   wasd - WASD light intensity
-   key - Other key light intensity
-
-Only values from 0-4 accepted
+echo -n "0" > /sys/bus/hid/devices/0003:046D:C24D.XXXX/logitech-g710/led_(keys|wasd)  off
+echo -n "1" > /sys/bus/hid/devices/0003:046D:C24D.XXXX/logitech-g710/led_(keys|wasd)  brightness 1
+echo -n "2" > /sys/bus/hid/devices/0003:046D:C24D.XXXX/logitech-g710/led_(keys|wasd)  brightness 2
+echo -n "3" > /sys/bus/hid/devices/0003:046D:C24D.XXXX/logitech-g710/led_(keys|wasd)  brightness 3
+echo -n "4" > /sys/bus/hid/devices/0003:046D:C24D.XXXX/logitech-g710/led_(keys|wasd)  brightness 4 (FULL)
 </pre>
+
+
+The driver also used led device if kernel version is above 4.3.0. Above attibutes are aligned with below.
+
+<pre>
+/sys/bus/hid/devices/0003:046D:C24D.XXXX/leds/input*:red:mr/brightness
+/sys/bus/hid/devices/0003:046D:C24D.XXXX/leds/input*:yellow:m1/brightness
+/sys/bus/hid/devices/0003:046D:C24D.XXXX/leds/input*:yellow:m2/brightness
+/sys/bus/hid/devices/0003:046D:C24D.XXXX/leds/input*:yellow:m3/brightness
+/sys/bus/hid/devices/0003:046D:C24D.XXXX/leds/input*:while:keys/brightness
+/sys/bus/hid/devices/0003:046D:C24D.XXXX/leds/input*:while:wasd/brightness
+</pre>
+
