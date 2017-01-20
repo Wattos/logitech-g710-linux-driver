@@ -42,7 +42,7 @@ Use the key shortcut utilities provided by your DE to make use of the additional
 
 API
 --------------------------
-The driver also exposes a way to set the keyboard backlight bightness. That is done by writing either:
+The driver also exposes a way (device attributes) to set the keyboard backlight bightness. That is done by writing either:
 
 <pre>
 /sys/bus/hid/devices/0003:046D:C24D.XXXX/logitech-g710/led_m1
@@ -71,7 +71,18 @@ echo -n "4" > /sys/bus/hid/devices/0003:046D:C24D.XXXX/logitech-g710/led_(keys|w
 </pre>
 
 
-The driver also used led device if kernel version is above 4.3.0. Above attibutes are aligned with below.
+The driver also used led device if kernel version is above 4.3.0. Handling of attributes is aligned.
+
+<pre>
+/sys/bus/hid/devices/0003:046D:C24D.XXXX/leds/input*:red:mr
+/sys/bus/hid/devices/0003:046D:C24D.XXXX/leds/input*:yellow:m1
+/sys/bus/hid/devices/0003:046D:C24D.XXXX/leds/input*:yellow:m2
+/sys/bus/hid/devices/0003:046D:C24D.XXXX/leds/input*:yellow:m3
+/sys/bus/hid/devices/0003:046D:C24D.XXXX/leds/input*:while:keys
+/sys/bus/hid/devices/0003:046D:C24D.XXXX/leds/input*:while:wasd
+</pre>
+
+Each led device got set of information, but to adjust brightness next ones should be used. The brightness file expects a single number which is a brightness value: m1-mr keys 0-1, keys and wasd 0-4.
 
 <pre>
 /sys/bus/hid/devices/0003:046D:C24D.XXXX/leds/input*:red:mr/brightness
@@ -81,5 +92,6 @@ The driver also used led device if kernel version is above 4.3.0. Above attibute
 /sys/bus/hid/devices/0003:046D:C24D.XXXX/leds/input*:while:keys/brightness
 /sys/bus/hid/devices/0003:046D:C24D.XXXX/leds/input*:while:wasd/brightness
 </pre>
+
 
 Note led devices can be found also from "/sys/class/leds/"
