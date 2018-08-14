@@ -1,0 +1,73 @@
+#!/bin/bash
+# Simple script to do some fun scans on the macro LEDs
+# Al Williams al.williams@awce.com - August 2016
+
+# Usage:
+# logitechscan [style] [delay delaytime]
+# For example:
+# logitechscan cylon delay 0.33
+# styles are scan, cylon, center, blink, persist, chase, and revchase
+# defaults are scan and 0.5 seconds
+
+# Note, this requires the script run as someone who can write to the
+# keyboard.
+# In my case, I put the following in my rc.local:
+# chmod 666 /sys/bus/hid/devices/0003\:046D\:C24D.000?/logitech-g710/led_[mk]*
+# However, that should probably go in a udev rule so if you plug/unplug
+# it still works
+
+FILE=`ls /sys/bus/hid/devices/0003\:046D\:C24D.000?/logitech-g710/led_macro`
+STYLE="1 2 4 8"
+DELAY=0.5
+
+# if we ever stop, turn off all LEDs
+trap "echo 0 >$FILE" EXIT
+
+if [ "$1" == "off" ]
+then
+  echo 0 >$FILE
+  exit
+fi
+
+
+while [ ! -z "$1" ]
+do
+  cmd="$1"
+  shift
+  case $cmd in
+  scan)
+     STYLE="1 2 4 8"
+     ;;
+  cylon)
+     STYLE="1 2 4 8 4 2"
+     ;;
+  center)
+     STYLE="6 9"
+     ;;
+  blink)
+     STYLE="15 0"
+     ;;
+  persist)
+     STYLE="0 1 3 7 15 7 3 1"
+     ;;
+  chase)
+     STYLE="0 1 3 7 15 14 12 8"
+     ;;
+  revchase)
+     STYLE="0 1 3 7 15 14 12 8 0 8 12 14 15 7 3 1"
+     ;;
+  delay)
+     DELAY=$1
+     shift
+     ;;
+   esac
+done
+
+while true
+do
+  for I in $STYLE
+  do
+    echo $I >$FILE
+    sleep $DELAY
+  done
+done
