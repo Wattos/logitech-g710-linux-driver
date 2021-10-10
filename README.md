@@ -35,6 +35,7 @@ Finally, if you do not receive any events in your environment, it might be neces
 xmodmap misc/.Xmodmap
 </pre>
 
+The above procedure works on Ubuntu 18.04 (focal).
 
 Usage
 --------------------------
@@ -55,6 +56,11 @@ The led_macro file expects a single number which is a bitmask of the first 4 bit
 
 <pre>
 echo -n "5" > /sys/bus/hid/devices/0003:046D:C24D.XXXX/logitech-g710/led_macro
+</pre>
+
+If you don't have root do:
+<pre>
+sudo sh -c "echo -n '5' > /sys/bus/hid/devices/0003:046D:C24D.XXXX/logitech-g710/led_macro"
 </pre>
 
 Writing the led_keys is a bit more involved. The file expects a single digit which is constructed in the following way:
